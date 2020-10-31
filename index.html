@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title>Image Downloader</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
@@ -287,7 +287,10 @@
                                 this.imageLinks.push({title: imageName, url : imageLink});
                                 console.log(this.imageLinks);
                             });
-                            
+                            this.valid = false;
+                            setTimeout(() => {
+                                this.valid = true;
+                            }, 5000);
                         })
                         .catch(error => console.log(error))
                 } else if (this.searchword && this.imageCount && this.AddSettings){
@@ -318,7 +321,10 @@
                                 this.imageLinks.push(imageLink);
                                 console.log(this.imageLinks);
                             });
-                            
+                            this.valid = false;
+                            setTimeout(() => {
+                                this.valid = true;
+                            }, 5000);
                         })
                         .catch(error => console.log(error))
                 } else {
