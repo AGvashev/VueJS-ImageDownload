@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+            <v-container style="text-align: center;">
+                <v-form ref="form" v-model="valid"  lazy-validation class="d-flex justify-space-between flex-column">
+                    <v-row>
+                        <v-col
+                            cols="8"
+                            md="4"
+                        >
+                            <v-text-field
+                                v-model="searchword"
+                                :rules="searchWordRules"
+                                :counter="10"
+                                label="Search Word"
+                                required
+                            ></v-text-field>
+                        </v-col>
+                        
+                        <v-col
+                            cols="8"
+                            md="4"
+                        >
+                            <v-text-field
+                                v-model="imageCount"
+                                :rules="imageCountRules"
+                                :counter="2"
+                                label="Image count"
+                                required
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+
+
+                    <v-btn
+                    class="mx-2"
+                    fab
+                    dark
+                    small
+                    color="primary"
+                    @click = 'AddSettingsToggle'
+                    >
+                        <v-icon dark v-if="!AddSettings">
+                        mdi-plus
+                        </v-icon>
+                        <v-icon dark v-if="AddSettings">
+                            mdi-minus
+                        </v-icon>
+                    </v-btn>
+                    
+                    <transition name="slide-fade">
+                        <div class="more" 
+                        v-if="AddSettings"
+                        >
+                            <v-row>
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                >
+                                    <v-select
+                                    v-model="imageColor"
+                                    :items="colors"
+                                    item-text="color"
+                                    item-value="colorAPI"
+                                    label="Image Color"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col> 
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                >
+                                    <v-select
+                                    v-model="imageSize"
+                                    :items="sizes"
+                                    item-text="size"
+                                    item-value="sizeAPI"
+                                    label="Image Size"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col>
+                            </v-row>
+
+                            <v-row>
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                >
+                                    <v-select
+                                    v-model="freshnes"
+                                    :items="freshness"
+                                    item-text="value"
+                                    item-value="valueAPI"
+                                    label="Sort by popularity for"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col> 
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                >
+                                    <v-select
+                                    v-model="imageType"
+                                    :items="imageTypes"
+                                    item-text="type"
+                                    item-value="typeAPI"
+                                    label="Image type"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col>
+                            </v-row>
+                            <v-row>
+                                <v-col>
+                                    <v-checkbox
+                                    v-model="safeSearch"
+                                    label='Safe Search'
+                                    required
+                                    ></v-checkbox>
+                                </v-col>
+                                
+                            </v-row>
+                        </div>
+                    </transition>
+
+                    <div class="buttons">
+                        <v-btn 
+                        :disabled="!valid"
+                        type = "submit"
+                        color="success"
+                        @click.prevent="submit"
+                        >
+                            Submit
+                        </v-btn>
+
+                        <v-btn
+                        color="error"
+                        @click.prevent="reset"
+                        >
+                            Reset
+                        </v-btn>
+                    </div>
+                </v-form>
+
+                 <v-row>
+                    <v-col
+                    v-for="item in imageLinks"
+                    :item="item.url"
+                    :key="item.title"
+                    class="d-flex child-flex"
+                    cols="4"
+                    >
+                    <v-card>
+                        <v-img
+                        :src="item.url"
+                        aspect-ratio="1"
+                        class="grey lighten-2"
+                    >
+                            <template v-slot:placeholder>
+                                <v-row
+                                    class="fill-height ma-0"
+                                    align="center"
+                                    justify="center"
+                                >
+                                    <v-progress-circular
+                                    indeterminate
+                                    color="grey lighten-5"
+                                    ></v-progress-circular>
+                                </v-row>
+                            </template>
+                        </v-img>
+                        <v-card-title 
+                            class="title"
+                        >
+                                <a :href="item.url">
+                                    {{item.title}}
+                                </a>
+                        </v-card-title>
+                    </v-card>
+                    </v-col>
+                </v-row>
+            </v-container>
+      </v-app>
+    </div>
+  
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        vuetify: new Vuetify(),
+        data: {
+            imageLinks: [],
+            show: true,
+            valid: true,
+            AddSettings: false,
+            searchword: '',
+            imageColor: null,
+            imageSize: null,
+            freshnes: null,
+            imageType: null,
+            safeSearch: true,
+            searchWordRules: [
+                v => !!v || `Search word is required`,
+                v => (v && v.length <= 10) || `Search word must be less than 10 characters`,
+            ],
+            imageCount: '',
+            imageCountRules: [
+                v => !!v || `Image count is required`,
+                v => isFinite(v) || 'Enter a number',
+                v => (v && v.length <= 2) || `Image count must be less than 2 characters`,
+            ],
+            colors: [
+                {color: 'Colored', colorAPI: '&color=ColorOnly'},
+                {color: 'Black-white', colorAPI: '&color=Monochrome'},
+                {color: 'Black', colorAPI: '&color=Black'},
+                {color: 'Brown', colorAPI: '&color=Brown'},
+                {color: 'Gray', colorAPI: '&color=Gray'},
+                {color: 'Green', colorAPI: '&color=Green'},
+                {color: 'Orange', colorAPI: '&color=Orange'},
+                {color: 'Pink', colorAPI: '&color=Pink'},
+                {color: 'Purple', colorAPI: '&color=Purple'},
+                {color: 'Red', colorAPI: '&color=Red'},
+                {color: 'Teal', colorAPI: '&color=Teal'},
+                {color: 'White', colorAPI: '&color=White'},
+                {color: 'Yellow', colorAPI: '&color=Yellow'},
+            ],
+            sizes: [
+                {size: 'All', sizeAPI: ' '},
+                {size: 'Small', sizeAPI: '&size=Small'},
+                {size: 'Medium', sizeAPI: '&size=Medium'},
+                {size: 'Large', sizeAPI: '&size=Large'},
+                {size: 'Wallpaper', sizeAPI: '&size=Wallpaper'},
+            ],
+            freshness: [
+                { value : 'All', valueAPI: ' ' },
+                { value : 'Day', valueAPI: '&freshnes=Day' },
+                { value : 'Week', valueAPI: '&freshnes=Week' },
+                { value : 'Month', valueAPI: '&freshnes=Month' },
+            ],
+            imageTypes: [
+                {type: 'All', typeAPI: ' '},
+                {type: 'Animated Gif', typeAPI: '&imageType=AnimatedGif'},
+                {type: 'Clipart', typeAPI: '&imageType=Clipart'},
+                {type: 'Line', typeAPI: '&imageType=Line'},
+                {type: 'Photo', typeAPI: '&imageType=Photo'},
+                {type: 'Transparent', typeAPI: '&imageType=Transparent'},
+            ]
+        },
+        methods: {
+            submit() {
+                this.$refs.form.validate()
+                if (this.searchword && this.imageCount && !this.AddSettings) {
+                    console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
+                    const searchWordURL = this.searchword.split(' ').join('+');
+                    const imageCountsURL = this.imageCount;
+                    const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
+                    console.log(`Ссылка для запроса - ${url}`);
+                    // API запрос
+                    axios
+                        .get(url, { 
+                            headers: {
+                                'Ocp-Apim-Subscription-Key' : 'b4d4320fac514fe49913f4419f0b4c81' 
+                            }
+                        })
+                        .then(response => {
+                            values = response.data.value;
+                            this.imageLinks = [];
+                            values.forEach(element => {
+                                imageName = element.name;
+                                imageLink = element.contentUrl;
+                                this.imageLinks.push({title: imageName, url : imageLink});
+                                console.log(this.imageLinks);
+                            });
+                            
+                        })
+                        .catch(error => console.log(error))
+                } else if (this.searchword && this.imageCount && this.AddSettings){
+                    // Переменные для API запроса
+                    const searchWordURL = this.searchword.split(' ').join('+');
+                    const imageCountsURL = this.imageCount;
+                    const imageColorURL = this.imageColor;
+                    const imageFollowSortURL = this.freshnes;
+                    const imageTypeURL = this.imageType;
+                    let safeSearchURL;
+                    this.safeSearch == true ? safeSearchURL = '&safeSearch=strict' : safeSearchURL = '&safeSearch=off';
+                    const imageSizeURL = this.imageSize;
+                    console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
+                    const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
+                    console.log(`Ссылка для запроса - ${url}`);
+                    // API запрос
+                    axios
+                        .get(url, { 
+                            headers: {
+                                'Ocp-Apim-Subscription-Key' : 'b4d4320fac514fe49913f4419f0b4c81' 
+                            }
+                        })
+                        .then(response => {
+                            values = response.data.value;
+                            this.imageLinks = [];
+                            values.forEach(element => {
+                                imageLink = element.contentUrl;
+                                this.imageLinks.push(imageLink);
+                                console.log(this.imageLinks);
+                            });
+                            
+                        })
+                        .catch(error => console.log(error))
+                } else {
+                    console.log('Пользователь не заполнил форму.')
+                }
+            },
+            reset() {
+                this.$refs.form.reset()
+                this.imageLinks = [];
+            },
+            AddSettingsToggle() {
+                this.AddSettings ? this.AddSettings = false : this.AddSettings = true
+            }
+        }
+      })
+    </script>
+  </body>
+  </html>
+
