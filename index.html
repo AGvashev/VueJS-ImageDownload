@@ -157,6 +157,27 @@
                         >
                             Reset
                         </v-btn>
+                        
+                        <v-btn
+                        :bind="downloadURL"
+                        v-if="downloadURL"
+                        :href="`http://localhost:3000/${downloadURL}`"
+                        target="_blank"
+                        color="indigo"
+                        >
+                        <v-icon dark>
+                            mdi-cloud-upload
+                          </v-icon>
+                        </v-btn>
+                        
+                        <v-progress-circular
+                        indeterminate
+                        color="purple"
+                        v-else-if="imageLinks.length > 0"
+                        ></v-progress-circular>
+
+
+                        
                     </div>
                 </v-form>
 
@@ -270,19 +291,22 @@
                 {type: 'Line', typeAPI: '&imageType=Line'},
                 {type: 'Photo', typeAPI: '&imageType=Photo'},
                 {type: 'Transparent', typeAPI: '&imageType=Transparent'},
-            ]
+            ],
+            downloadURL: '',
         },
         methods: {
             submit() {
+                this.imageLinks = [];
+                this.downloadURL = '';
                 this.$refs.form.validate()
                 if (this.searchword && !this.AddSettings) {
                     console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
                     const searchWordURL = this.searchword.split(' ').join('+');
                     let imageCountsURL;
-                    this.imageCount.length == '' ? imageCountsURL = 10 :  imageCountsURL = this.imageCount;
+                    this.imageCount.length == '' ? imageCountsURL = 3 :  imageCountsURL = this.imageCount;
                     const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
                     console.log(`Ссылка для запроса - ${url}`);
-                    // API запрос
+                    // API запрос для получения ссылок + названий картинок
                     axios
                         .get(url, { 
                             headers: {
@@ -302,8 +326,11 @@
                             setTimeout(() => {
                                 this.valid = true;
                             }, 5000);
+                            // После удачного выполнения апи, делать запрос на сервер.
+                            this.axiosPOST();
                         })
                         .catch(error => console.log(error))
+                    
                 } else if (this.searchword && this.imageCount && this.AddSettings){
                     // Переменные для API запроса
                     const searchWordURL = this.searchword.split(' ').join('+');
@@ -317,7 +344,7 @@
                     console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
                     const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
                     console.log(`Ссылка для запроса - ${url}`);
-                    // API запрос
+                    // API запрос для получения сылок + названий картинок
                     axios
                         .get(url, { 
                             headers: {
@@ -337,6 +364,8 @@
                             setTimeout(() => {
                                 this.valid = true;
                             }, 5000);
+                            // После удачного выполнения апи, делать запрос на сервер.
+                            this.axiosPOST();
                         })
                         .catch(error => console.log(error))
                 } else {
@@ -344,8 +373,8 @@
                 }
             },
             reset() {
-                this.$refs.form.reset()
                 this.imageLinks = [];
+                this.$refs.form.reset()
             },
             AddSettingsToggle() {
                 this.AddSettings ? this.AddSettings = false : this.AddSettings = true
@@ -353,10 +382,26 @@
             handleResize() {
                 this.window.width = window.innerWidth;
                 this.window.height = window.innerHeight;
+            },
+            async axiosPOST() { // Функция запроса на сервер
+                let dwnURL = '';
+                // Создаем параметр который будем дальше отправлять
+                const params = new URLSearchParams();
+                params.append('imgLinkInServer', JSON.stringify(this.imageLinks));
+                await axios.post('http://localhost:3000/download', params)
+                .then(function (response) {
+                    console.log('Это респонз - ', response);
+                    dwnURL = response.data.URL // Присвоим полученную строку, значению downloadURL
+                    return dwnURL;
+                })
+                .catch(function (error) {
+                    console.log('Это ошибука -', error);
+                });
+                this.downloadURL = dwnURL;
             }
         },
         created() {
-            
+            // Возвращает ширину и высоту экрана пользователя 
             window.addEventListener('resize', this.handleResize);
             this.handleResize();
         },
