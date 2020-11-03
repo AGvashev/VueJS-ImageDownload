@@ -17,31 +17,18 @@
                     <v-row>
                         <v-col
                             cols="8"
-                            md="4"
+                            md="8"
                         >
                             <v-text-field
                                 v-model="searchword"
                                 :rules="searchWordRules"
                                 :counter="10"
                                 label="Search Word"
-                                required
-                            ></v-text-field>
-                        </v-col>
-                        
-                        <v-col
-                            cols="8"
-                            md="4"
-                        >
-                            <v-text-field
-                                v-model="imageCount"
-                                :rules="imageCountRules"
-                                :counter="2"
-                                label="Image count"
+                                append-icon="mdi-magnify"
                                 required
                             ></v-text-field>
                         </v-col>
                     </v-row>
-
 
                     <v-btn
                     class="mx-2"
@@ -51,11 +38,12 @@
                     color="primary"
                     @click = 'AddSettingsToggle'
                     >
+                    
                         <v-icon dark v-if="!AddSettings">
                         mdi-plus
                         </v-icon>
                         <v-icon dark v-if="AddSettings">
-                            mdi-minus
+                        mdi-minus
                         </v-icon>
                     </v-btn>
                     
@@ -65,8 +53,21 @@
                         >
                             <v-row>
                                 <v-col
-                                    cols="8"
-                                    md="4"
+                                cols="8"
+                                md="4"
+                                >
+                                    <v-text-field
+                                        v-model="imageCount"
+                                        :rules="imageCountRules"
+                                        :counter="2"
+                                        label="Image count"
+                                        required
+                                    ></v-text-field>
+                                </v-col>
+
+                                <v-col
+                                cols="8"
+                                md="4"
                                 >
                                     <v-select
                                     v-model="imageColor"
@@ -76,11 +77,14 @@
                                     label="Image Color"
                                     :rules = "[v => !!v || `Search word is required`]"
                                     required
-                                ></v-select>
+                                    ></v-select>
                                 </v-col> 
+                            </v-row>
+
+                            <v-row>
                                 <v-col
-                                    cols="8"
-                                    md="4"
+                                cols="8"
+                                md="4"
                                 >
                                     <v-select
                                     v-model="imageSize"
@@ -92,9 +96,6 @@
                                     required
                                 ></v-select>
                                 </v-col>
-                            </v-row>
-
-                            <v-row>
                                 <v-col
                                     cols="8"
                                     md="4"
@@ -109,23 +110,26 @@
                                     required
                                 ></v-select>
                                 </v-col> 
+                            </v-row>
+                            <v-row>
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                    >
+                                        <v-select
+                                        v-model="imageType"
+                                        :items="imageTypes"
+                                        item-text="type"
+                                        item-value="typeAPI"
+                                        label="Image type"
+                                        :rules = "[v => !!v || `Search word is required`]"
+                                        required
+                                    ></v-select>
+                                    </v-col>
                                 <v-col
                                     cols="8"
                                     md="4"
                                 >
-                                    <v-select
-                                    v-model="imageType"
-                                    :items="imageTypes"
-                                    item-text="type"
-                                    item-value="typeAPI"
-                                    label="Image type"
-                                    :rules = "[v => !!v || `Search word is required`]"
-                                    required
-                                ></v-select>
-                                </v-col>
-                            </v-row>
-                            <v-row>
-                                <v-col>
                                     <v-checkbox
                                     v-model="safeSearch"
                                     label='Safe Search'
@@ -162,35 +166,37 @@
                     :item="item.url"
                     :key="item.title"
                     class="d-flex child-flex"
-                    cols="4"
+                    :cols="window.width > 1200 ? 4 : window.width < 620 ? 8 : 6"
                     >
-                    <v-card>
-                        <v-img
-                        :src="item.url"
-                        aspect-ratio="1"
-                        class="grey lighten-2"
-                    >
-                            <template v-slot:placeholder>
-                                <v-row
-                                    class="fill-height ma-0"
-                                    align="center"
-                                    justify="center"
-                                >
-                                    <v-progress-circular
-                                    indeterminate
-                                    color="grey lighten-5"
-                                    ></v-progress-circular>
-                                </v-row>
-                            </template>
-                        </v-img>
-                        <v-card-title 
-                            class="title"
+                        <v-card
+                            class="justify-center"
                         >
-                                <a :href="item.url">
-                                    {{item.title}}
-                                </a>
-                        </v-card-title>
-                    </v-card>
+                            <v-img
+                            :src="item.url"
+                            aspect-ratio="1"
+                            class="grey lighten-2"
+                            >   
+                                <template v-slot:placeholder>
+                                    <v-row
+                                        class="fill-height ma-0"
+                                        align="center"
+                                        justify="center"
+                                    >
+                                        <v-progress-circular
+                                        indeterminate
+                                        color="grey lighten-5"
+                                        ></v-progress-circular>
+                                    </v-row>
+                                </template>
+                            </v-img>
+                            <v-card-title 
+                                class="title text-caption"
+                            >
+                                    <a :href="item.url">
+                                        {{item.title}}
+                                    </a>
+                            </v-card-title>
+                        </v-card>
                     </v-col>
                 </v-row>
             </v-container>
@@ -205,6 +211,10 @@
         el: '#app',
         vuetify: new Vuetify(),
         data: {
+            window: {
+                width: 0,
+                height: 0
+            },
             imageLinks: [],
             show: true,
             valid: true,
@@ -265,10 +275,11 @@
         methods: {
             submit() {
                 this.$refs.form.validate()
-                if (this.searchword && this.imageCount && !this.AddSettings) {
+                if (this.searchword && !this.AddSettings) {
                     console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
                     const searchWordURL = this.searchword.split(' ').join('+');
-                    const imageCountsURL = this.imageCount;
+                    let imageCountsURL;
+                    this.imageCount.length == '' ? imageCountsURL = 10 :  imageCountsURL = this.imageCount;
                     const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
                     console.log(`Ссылка для запроса - ${url}`);
                     // API запрос
@@ -317,8 +328,9 @@
                             values = response.data.value;
                             this.imageLinks = [];
                             values.forEach(element => {
+                                imageName = element.name;
                                 imageLink = element.contentUrl;
-                                this.imageLinks.push(imageLink);
+                                this.imageLinks.push({title: imageName, url : imageLink});
                                 console.log(this.imageLinks);
                             });
                             this.valid = false;
@@ -337,7 +349,19 @@
             },
             AddSettingsToggle() {
                 this.AddSettings ? this.AddSettings = false : this.AddSettings = true
+            },
+            handleResize() {
+                this.window.width = window.innerWidth;
+                this.window.height = window.innerHeight;
             }
+        },
+        created() {
+            
+            window.addEventListener('resize', this.handleResize);
+            this.handleResize();
+        },
+        destroyed() {
+            window.removeEventListener('resize', this.handleResize);
         }
       })
     </script>
