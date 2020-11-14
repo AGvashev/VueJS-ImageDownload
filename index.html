@@ -262,6 +262,7 @@
             imageCountRules: [
                 v => !!v || `Image count is required`,
                 v => isFinite(v) || 'Enter a number',
+                v => (v && v > 0) || 'Enter a number greater than 0',
                 v => (v && v.length <= 2) || `Image count must be less than 2 characters`,
             ],
             colors: [
@@ -318,7 +319,7 @@
                     axios
                         .get(url, { 
                             headers: {
-                                'Ocp-Apim-Subscription-Key' : 'enter you API key' 
+                                'Ocp-Apim-Subscription-Key' : 'enter you api key' 
                             }
                         })
                         .then(response => {
@@ -328,7 +329,6 @@
                                 imageName = element.name;
                                 imageLink = element.contentUrl;
                                 this.imageLinks.push({title: imageName, url : imageLink});
-                                console.log(this.imageLinks);
                             });
                             this.valid = false;
                             setTimeout(() => {
@@ -356,7 +356,7 @@
                     axios
                         .get(url, { 
                             headers: {
-                                'Ocp-Apim-Subscription-Key' : 'enter you API key' 
+                                'Ocp-Apim-Subscription-Key' : 'enter you api key' 
                             }
                         })
                         .then(response => {
@@ -366,7 +366,6 @@
                                 imageName = element.name;
                                 imageLink = element.contentUrl;
                                 this.imageLinks.push({title: imageName, url : imageLink});
-                                console.log(this.imageLinks);
                             });
                             this.valid = false;
                             setTimeout(() => {
@@ -403,7 +402,7 @@
                     return dwnURL;
                 })
                 .catch(function (error) {
-                    console.log('Это ошибука -', error);
+                    console.log('Это ошибка -', error);
                 });
                 this.downloadURL = dwnURL;
             }
