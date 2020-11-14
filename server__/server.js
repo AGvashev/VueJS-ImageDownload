@@ -99,14 +99,14 @@ app.post('/download', function(req, res) {
                 const filePath = path.join(__dirname + `/${dirName}.zip`); 
                 // Возвращаем файл по ссылке
                 fs.readFile(filePath, function(error, dataR){
-                    console.log('Выполняется')
+                    console.log('Пробую отправить файл')
                     if(error){
                         console.log(error);
                         res.statusCode = 404;
                         res.end("Resourse not found!");
                     }   
                     else{
-                        console.log('Response end')
+                        console.log('Файл успешно отправлен')
                         res.end(dataR);
                     }
                 });

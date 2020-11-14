@@ -189,35 +189,43 @@
                     class="d-flex child-flex"
                     :cols="window.width > 1200 ? 4 : window.width < 620 ? 8 : 6"
                     >
-                        <v-card
-                            class="justify-center"
+                        <v-lazy
+                            :options="{
+                            threshold: .5
+                            }"
+                            min-height="200"
+                            transition="fade-transition"
                         >
-                            <v-img
-                            :src="item.url"
-                            aspect-ratio="1"
-                            class="grey lighten-2"
-                            >   
-                                <template v-slot:placeholder>
-                                    <v-row
-                                        class="fill-height ma-0"
-                                        align="center"
-                                        justify="center"
-                                    >
-                                        <v-progress-circular
-                                        indeterminate
-                                        color="grey lighten-5"
-                                        ></v-progress-circular>
-                                    </v-row>
-                                </template>
-                            </v-img>
-                            <v-card-title 
-                                class="title text-caption"
+                            <v-card
+                                class="justify-center"
                             >
-                                    <a :href="item.url">
-                                        {{item.title}}
-                                    </a>
-                            </v-card-title>
-                        </v-card>
+                                <v-img
+                                :src="item.url"
+                                aspect-ratio="1"
+                                class="grey lighten-2"
+                                >   
+                                    <template v-slot:placeholder>
+                                        <v-row
+                                            class="fill-height ma-0"
+                                            align="center"
+                                            justify="center"
+                                        >
+                                            <v-progress-circular
+                                            indeterminate
+                                            color="grey lighten-5"
+                                            ></v-progress-circular>
+                                        </v-row>
+                                    </template>
+                                </v-img>
+                                <v-card-title 
+                                    class="title text-caption"
+                                >
+                                        <a :href="item.url">
+                                            {{item.title}}
+                                        </a>
+                                </v-card-title>
+                            </v-card>
+                        </v-lazy>
                     </v-col>
                 </v-row>
             </v-container>
@@ -304,13 +312,13 @@
                     const searchWordURL = this.searchword.split(' ').join('+');
                     let imageCountsURL;
                     this.imageCount.length == '' ? imageCountsURL = 3 :  imageCountsURL = this.imageCount;
-                    const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
+                    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
                     console.log(`Ссылка для запроса - ${url}`);
                     // API запрос для получения ссылок + названий картинок
                     axios
                         .get(url, { 
                             headers: {
-                                'Ocp-Apim-Subscription-Key' : 'b4d4320fac514fe49913f4419f0b4c81' 
+                                'Ocp-Apim-Subscription-Key' : 'enter you API key' 
                             }
                         })
                         .then(response => {
@@ -342,13 +350,13 @@
                     this.safeSearch == true ? safeSearchURL = '&safeSearch=strict' : safeSearchURL = '&safeSearch=off';
                     const imageSizeURL = this.imageSize;
                     console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
-                    const url = `https://api.cognitive.microsoft.com/bing/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
+                    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
                     console.log(`Ссылка для запроса - ${url}`);
                     // API запрос для получения сылок + названий картинок
                     axios
                         .get(url, { 
                             headers: {
-                                'Ocp-Apim-Subscription-Key' : 'b4d4320fac514fe49913f4419f0b4c81' 
+                                'Ocp-Apim-Subscription-Key' : 'enter you API key' 
                             }
                         })
                         .then(response => {
