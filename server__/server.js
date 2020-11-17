@@ -124,7 +124,7 @@ app.post('/download-bing', function(req, res) {
     });
   });
 
-app.post('/download-google', function(req, res) {
+app.post('/download-yandex', function(req, res) {
     // Принимаем все правила
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");

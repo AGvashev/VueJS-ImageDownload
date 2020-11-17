@@ -38,7 +38,7 @@
                         <v-btn
                         color="red darken-1"
                         text
-                        @click="chooseSearchSite = false, googleSearch = true"
+                        @click="chooseSearchSite = false, yandexSearch = true"
                         >
                         Yandex
                         <v-icon >
@@ -268,7 +268,7 @@
                 </v-row>
             </v-container>
 
-            <v-container style="text-align: center;" v-if="googleSearch == true">
+            <v-container style="text-align: center;" v-if="yandexSearch == true">
                 <v-form ref="form" v-model="valid"  lazy-validation class="d-flex justify-space-between flex-column">
                     <v-row>
                         <v-col
@@ -327,7 +327,7 @@
                                 >
                                     <v-select
                                     v-model="imageColor"
-                                    :items="googleColors"
+                                    :items="yandexColors"
                                     item-text="color"
                                     item-value="colorApi"
                                     label="Image Color"
@@ -344,7 +344,7 @@
                                 >
                                     <v-select
                                     v-model="imageSize"
-                                    :items="googleSizes"
+                                    :items="yandexSizes"
                                     item-text="size"
                                     item-value="sizeAPI"
                                     label="Image Size"
@@ -358,7 +358,7 @@
                                 >
                                     <v-select
                                     v-model="imageOrientation"
-                                    :items="googleOrientattions"
+                                    :items="yandexOrientattions"
                                     item-text="orientation"
                                     item-value="orientationApi"
                                     label="Image orientation"
@@ -374,7 +374,7 @@
                                     >
                                         <v-select
                                         v-model="imageType"
-                                        :items="googleImageTypes"
+                                        :items="yandexImageTypes"
                                         item-text="imageType"
                                         item-value="typeApi"
                                         label="Image type"
@@ -389,7 +389,7 @@
                                     >
                                         <v-select
                                         v-model="fileTypes"
-                                        :items="googleFileTypes"
+                                        :items="yandexFileTypes"
                                         item-text="fileType"
                                         item-value="filTypeApi"
                                         label="Image file type"
@@ -509,7 +509,7 @@
             searched: false,
             chooseSearchSite: true,
             bingSearch: false,
-            googleSearch: false,
+            yandexSearch: false,
             window: {
                 width: 0,
                 height: 0
@@ -575,20 +575,20 @@
                 {type: 'Photo', typeAPI: '&imageType=Photo'},
                 {type: 'Transparent', typeAPI: '&imageType=Transparent'},
             ],
-            googleSizes: [
+            yandexSizes: [
                 {size: 'All', sizeAPI: ' '},
                 {size: 'Small', sizeAPI: '&isize=small'},
                 {size: 'Medium', sizeAPI: '&isize=medium'},
                 {size: 'Large', sizeAPI: '&isize=large'},
                 {size: 'Wallpaper', sizeAPI: '&wp=wh16x9_1920x1080'},
             ],
-            googleOrientattions: [
+            yandexOrientattions: [
                 {orientation: 'All', orientationApi: ' '},
                 {orientation: 'Horizontal', orientationApi: '&iorient=horizontal'},
                 {orientation: 'Vertical', orientationApi: '&iorient=vertical'},
                 {orientation: 'Square', orientationApi: '&iorient=square'},
             ],
-            googleImageTypes: [
+            yandexImageTypes: [
                 {imageType: 'All', typeApi: ' '},
                 {imageType: 'Photo', typeApi: '&type=photo'},
                 {imageType: 'Clipart', typeApi: '&type=clipart'},
@@ -596,7 +596,7 @@
                 {imageType: 'Face', typeApi: '&type=face'},
                 {imageType: 'Demotivator', typeApi: '&type=demotivator'},
             ],
-            googleColors: [
+            yandexColors: [
                 {color: 'All', colorApi: ' '},
                 {color: 'Colored', colorApi: '&icolor=color'},
                 {color: 'Black-white', colorApi: '&icolor=gray'},
@@ -609,7 +609,7 @@
                 {color: 'White', colorApi: '&icolor=white'},
                 {color: 'Black', colorApi: '&icolor=black'},
             ],
-            googleFileTypes: [
+            yandexFileTypes: [
                 {fileType: 'All', filTypeApi: ' '},
                 {fileType: 'JPEG', filTypeApi: '&itype=jpg'},
                 {fileType: 'PNG', filTypeApi: '&itype=png'},
@@ -690,7 +690,7 @@
                     } else {
                         console.log('Пользователь не заполнил форму.')
                     }
-                } else if (this.googleSearch == true) { 
+                } else if (this.yandexSearch == true) { 
                     if (this.searchword && !this.AddSettings) {
                         console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
                         const searchWordURL = this.searchword.split(' ').join('+');
@@ -700,7 +700,7 @@
                         console.log(`Ссылка для запроса - ${url}`);
                         // Отправляем ссылку на бекенд для дальнейшего парсинга
                         this.searched = true;
-                        this.POSTgoogle(url, imageCountsURL)
+                        this.POSTyandex(url, imageCountsURL)
                             .then( ()=> {
                                 this.valid = false;
                                 setTimeout(() => {
@@ -720,7 +720,7 @@
                         const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}`
                         console.log(`Ссылка для запроса - ${url}`);
                         // API запрос для получения ссылок + названий картинок
-                        this.POSTgoogle(url, imageCountsURL)
+                        this.POSTyandex(url, imageCountsURL)
                             .then( ()=> {
                                 this.valid = false;
                                 setTimeout(() => {
@@ -759,7 +759,7 @@
                 });
                 this.downloadURL = dwnURL;
             },
-            async POSTgoogle(urlFromParse, imageCount) {
+            async POSTyandex(urlFromParse, imageCount) {
                 console.log('Выполняется POSTGoogle')
                 console.log(urlFromParse, ' Это url')
                 let dwnURL = '';
@@ -767,7 +767,7 @@
                 const params = new URLSearchParams();
                 params.append('imageCountInServer', JSON.stringify(imageCount));
                 params.append('urlFromParseInServer', JSON.stringify(urlFromParse));
-                await axios.post('http://localhost:3000/download-google', params)
+                await axios.post('http://localhost:3000/download-yandex', params)
                 .then(function (response) {
                     console.log('Это респонз - ', response);
                     dwnURL = response.data.URL
