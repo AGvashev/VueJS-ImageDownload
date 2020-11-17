@@ -12,7 +12,45 @@
   <body>
     <div id="app">
       <v-app>
-            <v-container style="text-align: center;">
+            <v-dialog
+            v-model="chooseSearchSite"
+            persistent
+            max-width="550"
+            >
+                <v-card>
+                    <v-card-title class="headline">
+                        Выбери пойсковую систему для пойска?
+                    </v-card-title>
+                    <v-card-text>У каждой пойсковой системы есть свои настройки для пойска. Более гибкая настройка у Bing, наиболее популярные картинки у Google</v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="chooseSearchSite = false, bingSearch = true"
+                        >
+                        Bing
+                        <v-icon>
+                            mdi-bing
+                            
+                        </v-icon>
+                        </v-btn>
+                        <v-btn
+                        color="red darken-1"
+                        text
+                        @click="chooseSearchSite = false, googleSearch = true"
+                        >
+                        Yandex
+                        <v-icon >
+                            mdi-file-image-box
+                        </v-icon>
+                        </v-btn>
+                        <v-spacer></v-spacer>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
+            <v-container style="text-align: center;" v-if="bingSearch == true">
                 <v-form ref="form" v-model="valid"  lazy-validation class="d-flex justify-space-between flex-column">
                     <v-row>
                         <v-col
@@ -71,7 +109,7 @@
                                 >
                                     <v-select
                                     v-model="imageColor"
-                                    :items="colors"
+                                    :items="bingColors"
                                     item-text="color"
                                     item-value="colorAPI"
                                     label="Image Color"
@@ -88,7 +126,7 @@
                                 >
                                     <v-select
                                     v-model="imageSize"
-                                    :items="sizes"
+                                    :items="bingSizes"
                                     item-text="size"
                                     item-value="sizeAPI"
                                     label="Image Size"
@@ -102,7 +140,7 @@
                                 >
                                     <v-select
                                     v-model="freshnes"
-                                    :items="freshness"
+                                    :items="bingFreshness"
                                     item-text="value"
                                     item-value="valueAPI"
                                     label="Sort by popularity for"
@@ -118,7 +156,7 @@
                                     >
                                         <v-select
                                         v-model="imageType"
-                                        :items="imageTypes"
+                                        :items="bingImageTypes"
                                         item-text="type"
                                         item-value="typeAPI"
                                         label="Image type"
@@ -183,9 +221,237 @@
 
                  <v-row>
                     <v-col
-                    v-for="item in imageLinks"
+                    v-for="(item, index) in imageLinks"
                     :item="item.url"
-                    :key="item.title"
+                    :key="index"
+                    class="d-flex child-flex"
+                    :cols="window.width > 1200 ? 4 : window.width < 620 ? 8 : 6"
+                    >
+                        <v-lazy
+                            :options="{
+                            threshold: .5
+                            }"
+                            min-height="200"
+                            transition="fade-transition"
+                        >
+                            <v-card
+                                class="justify-center"
+                            >
+                                <v-img
+                                :src="item.url"
+                                aspect-ratio="1"
+                                class="grey lighten-2"
+                                >   
+                                    <template v-slot:placeholder>
+                                        <v-row
+                                            class="fill-height ma-0"
+                                            align="center"
+                                            justify="center"
+                                        >
+                                            <v-progress-circular
+                                            indeterminate
+                                            color="grey lighten-5"
+                                            ></v-progress-circular>
+                                        </v-row>
+                                    </template>
+                                </v-img>
+                                <v-card-title 
+                                    class="title text-caption"
+                                >
+                                        <a :href="item.url">
+                                            {{item.title}}
+                                        </a>
+                                </v-card-title>
+                            </v-card>
+                        </v-lazy>
+                    </v-col>
+                </v-row>
+            </v-container>
+
+            <v-container style="text-align: center;" v-if="googleSearch == true">
+                <v-form ref="form" v-model="valid"  lazy-validation class="d-flex justify-space-between flex-column">
+                    <v-row>
+                        <v-col
+                            cols="8"
+                            md="8"
+                        >
+                            <v-text-field
+                                v-model="searchword"
+                                :rules="searchWordRules"
+                                :counter="10"
+                                label="Search Word"
+                                append-icon="mdi-magnify"
+                                required
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+
+                    <v-btn
+                    class="mx-2"
+                    fab
+                    dark
+                    small
+                    color="primary"
+                    @click = 'AddSettingsToggle'
+                    >
+                    
+                        <v-icon dark v-if="!AddSettings">
+                        mdi-plus
+                        </v-icon>
+                        <v-icon dark v-if="AddSettings">
+                        mdi-minus
+                        </v-icon>
+                    </v-btn>
+                    
+                    <transition name="slide-fade">
+                        <div class="more" 
+                        v-if="AddSettings"
+                        >
+                            <v-row>
+                                <v-col
+                                cols="8"
+                                md="4"
+                                >
+                                    <v-text-field
+                                        v-model="imageCount"
+                                        :rules="imageCountRules"
+                                        :counter="2"
+                                        label="Image count"
+                                        required
+                                    ></v-text-field>
+                                </v-col>
+
+                                <v-col
+                                cols="8"
+                                md="4"
+                                >
+                                    <v-select
+                                    v-model="imageColor"
+                                    :items="googleColors"
+                                    item-text="color"
+                                    item-value="colorApi"
+                                    label="Image Color"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                    ></v-select>
+                                </v-col> 
+                            </v-row>
+
+                            <v-row>
+                                <v-col
+                                cols="8"
+                                md="4"
+                                >
+                                    <v-select
+                                    v-model="imageSize"
+                                    :items="googleSizes"
+                                    item-text="size"
+                                    item-value="sizeAPI"
+                                    label="Image Size"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col>
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                >
+                                    <v-select
+                                    v-model="imageOrientation"
+                                    :items="googleOrientattions"
+                                    item-text="orientation"
+                                    item-value="orientationApi"
+                                    label="Image orientation"
+                                    :rules = "[v => !!v || `Search word is required`]"
+                                    required
+                                ></v-select>
+                                </v-col> 
+                            </v-row>
+                            <v-row>
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                    >
+                                        <v-select
+                                        v-model="imageType"
+                                        :items="googleImageTypes"
+                                        item-text="imageType"
+                                        item-value="typeApi"
+                                        label="Image type"
+                                        :rules = "[v => !!v || `Search word is required`]"
+                                        required
+                                    ></v-select>
+                                </v-col>
+                                
+                                <v-col
+                                    cols="8"
+                                    md="4"
+                                    >
+                                        <v-select
+                                        v-model="fileTypes"
+                                        :items="googleFileTypes"
+                                        item-text="fileType"
+                                        item-value="filTypeApi"
+                                        label="Image file type"
+                                        :rules = "[v => !!v || `Search word is required`]"
+                                        required
+                                    ></v-select>
+                                </v-col>
+                                
+                            </v-row>
+                        </div>
+                    </transition> 
+
+                    <div class="buttons">
+                        <v-btn 
+                        :disabled="!valid"
+                        type = "submit"
+                        color="success"
+                        @click.prevent="submit"
+                        >
+                            Submit
+                        </v-btn>
+
+                        <v-btn
+                        color="error"
+                        @click.prevent="reset"
+                        >
+                            Reset
+                        </v-btn>
+                        
+                        <v-btn
+                        :bind="downloadURL"
+                        v-if="downloadURL && downloadURL != 'Картинок по вашему запросу не найдено'"
+                        :href="`http://localhost:3000/${downloadURL}`"
+                        target="_blank"
+                        color="indigo"
+                        >
+                        <v-icon dark>
+                            mdi-cloud-upload
+                          </v-icon>
+                        </v-btn>
+                        
+                        <v-progress-circular
+                        indeterminate
+                        color="purple"
+                        v-else-if="imageLinks.length > 0 || searched == true"
+                        ></v-progress-circular>
+
+                        <v-alert
+                        v-if="downloadURL == 'Картинок по вашему запросу не найдено'"
+                        dismissible
+                        type="error"
+                        style="position: fixed; top: 20%; left: 20%;"
+                        >Картинок по вашему запросу не найдено</v-alert>  
+                        
+                    </div>
+                </v-form>
+
+                 <v-row>
+                    <v-col
+                    v-for="(item, index) in imageLinks"
+                    :item="item.url"
+                    :key="index"
                     class="d-flex child-flex"
                     :cols="window.width > 1200 ? 4 : window.width < 620 ? 8 : 6"
                     >
@@ -240,6 +506,10 @@
         el: '#app',
         vuetify: new Vuetify(),
         data: {
+            searched: false,
+            chooseSearchSite: true,
+            bingSearch: false,
+            googleSearch: false,
             window: {
                 width: 0,
                 height: 0
@@ -253,7 +523,10 @@
             imageSize: null,
             freshnes: null,
             imageType: null,
+            imageOrientation: null,
+            fileTypes: null,
             safeSearch: true,
+            downloadURL: '',
             searchWordRules: [
                 v => !!v || `Search word is required`,
                 v => (v && v.length <= 10) || `Search word must be less than 10 characters`,
@@ -263,9 +536,10 @@
                 v => !!v || `Image count is required`,
                 v => isFinite(v) || 'Enter a number',
                 v => (v && v > 0) || 'Enter a number greater than 0',
+                v => (v && v < 25) || 'Enter a number less than 25',
                 v => (v && v.length <= 2) || `Image count must be less than 2 characters`,
             ],
-            colors: [
+            bingColors: [
                 {color: 'Colored', colorAPI: '&color=ColorOnly'},
                 {color: 'Black-white', colorAPI: '&color=Monochrome'},
                 {color: 'Black', colorAPI: '&color=Black'},
@@ -280,20 +554,20 @@
                 {color: 'White', colorAPI: '&color=White'},
                 {color: 'Yellow', colorAPI: '&color=Yellow'},
             ],
-            sizes: [
+            bingSizes: [
                 {size: 'All', sizeAPI: ' '},
                 {size: 'Small', sizeAPI: '&size=Small'},
                 {size: 'Medium', sizeAPI: '&size=Medium'},
                 {size: 'Large', sizeAPI: '&size=Large'},
                 {size: 'Wallpaper', sizeAPI: '&size=Wallpaper'},
             ],
-            freshness: [
+            bingFreshness: [
                 { value : 'All', valueAPI: ' ' },
                 { value : 'Day', valueAPI: '&freshnes=Day' },
                 { value : 'Week', valueAPI: '&freshnes=Week' },
                 { value : 'Month', valueAPI: '&freshnes=Month' },
             ],
-            imageTypes: [
+            bingImageTypes: [
                 {type: 'All', typeAPI: ' '},
                 {type: 'Animated Gif', typeAPI: '&imageType=AnimatedGif'},
                 {type: 'Clipart', typeAPI: '&imageType=Clipart'},
@@ -301,82 +575,161 @@
                 {type: 'Photo', typeAPI: '&imageType=Photo'},
                 {type: 'Transparent', typeAPI: '&imageType=Transparent'},
             ],
-            downloadURL: '',
+            googleSizes: [
+                {size: 'All', sizeAPI: ' '},
+                {size: 'Small', sizeAPI: '&isize=small'},
+                {size: 'Medium', sizeAPI: '&isize=medium'},
+                {size: 'Large', sizeAPI: '&isize=large'},
+                {size: 'Wallpaper', sizeAPI: '&wp=wh16x9_1920x1080'},
+            ],
+            googleOrientattions: [
+                {orientation: 'All', orientationApi: ' '},
+                {orientation: 'Horizontal', orientationApi: '&iorient=horizontal'},
+                {orientation: 'Vertical', orientationApi: '&iorient=vertical'},
+                {orientation: 'Square', orientationApi: '&iorient=square'},
+            ],
+            googleImageTypes: [
+                {imageType: 'All', typeApi: ' '},
+                {imageType: 'Photo', typeApi: '&type=photo'},
+                {imageType: 'Clipart', typeApi: '&type=clipart'},
+                {imageType: 'Lineart', typeApi: '&type=lineart'},
+                {imageType: 'Face', typeApi: '&type=face'},
+                {imageType: 'Demotivator', typeApi: '&type=demotivator'},
+            ],
+            googleColors: [
+                {color: 'All', colorApi: ' '},
+                {color: 'Colored', colorApi: '&icolor=color'},
+                {color: 'Black-white', colorApi: '&icolor=gray'},
+                {color: 'Red', colorApi: '&icolor=red'},
+                {color: 'Orange', colorApi: '&icolor=orange'},
+                {color: 'Yellow', colorApi: '&icolor=yellow'},
+                {color: 'Cyan', colorApi: '&icolor=cyan'},
+                {color: 'Blue', colorApi: '&icolor=blue'},
+                {color: 'Violet', colorApi: '&icolor=violet'},
+                {color: 'White', colorApi: '&icolor=white'},
+                {color: 'Black', colorApi: '&icolor=black'},
+            ],
+            googleFileTypes: [
+                {fileType: 'All', filTypeApi: ' '},
+                {fileType: 'JPEG', filTypeApi: '&itype=jpg'},
+                {fileType: 'PNG', filTypeApi: '&itype=png'},
+                {fileType: 'GIF', filTypeApi: '&itype=gifan'}
+            ]
         },
         methods: {
             submit() {
                 this.imageLinks = [];
                 this.downloadURL = '';
                 this.$refs.form.validate()
-                if (this.searchword && !this.AddSettings) {
-                    console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
-                    const searchWordURL = this.searchword.split(' ').join('+');
-                    let imageCountsURL;
-                    this.imageCount.length == '' ? imageCountsURL = 3 :  imageCountsURL = this.imageCount;
-                    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
-                    console.log(`Ссылка для запроса - ${url}`);
-                    // API запрос для получения ссылок + названий картинок
-                    axios
-                        .get(url, { 
-                            headers: {
-                                'Ocp-Apim-Subscription-Key' : 'enter you api key' 
-                            }
-                        })
-                        .then(response => {
-                            values = response.data.value;
-                            this.imageLinks = [];
-                            values.forEach(element => {
-                                imageName = element.name;
-                                imageLink = element.contentUrl;
-                                this.imageLinks.push({title: imageName, url : imageLink});
-                            });
-                            this.valid = false;
-                            setTimeout(() => {
-                                this.valid = true;
-                            }, 5000);
-                            // После удачного выполнения апи, делать запрос на сервер.
-                            this.axiosPOST();
-                        })
-                        .catch(error => console.log(error))
-                    
-                } else if (this.searchword && this.imageCount && this.AddSettings){
-                    // Переменные для API запроса
-                    const searchWordURL = this.searchword.split(' ').join('+');
-                    const imageCountsURL = this.imageCount;
-                    const imageColorURL = this.imageColor;
-                    const imageFollowSortURL = this.freshnes;
-                    const imageTypeURL = this.imageType;
-                    let safeSearchURL;
-                    this.safeSearch == true ? safeSearchURL = '&safeSearch=strict' : safeSearchURL = '&safeSearch=off';
-                    const imageSizeURL = this.imageSize;
-                    console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
-                    const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
-                    console.log(`Ссылка для запроса - ${url}`);
-                    // API запрос для получения сылок + названий картинок
-                    axios
-                        .get(url, { 
-                            headers: {
-                                'Ocp-Apim-Subscription-Key' : 'enter you api key' 
-                            }
-                        })
-                        .then(response => {
-                            values = response.data.value;
-                            this.imageLinks = [];
-                            values.forEach(element => {
-                                imageName = element.name;
-                                imageLink = element.contentUrl;
-                                this.imageLinks.push({title: imageName, url : imageLink});
-                            });
-                            this.valid = false;
-                            setTimeout(() => {
-                                this.valid = true;
-                            }, 5000);
-                            // После удачного выполнения апи, делать запрос на сервер.
-                            this.axiosPOST();
-                        })
-                        .catch(error => console.log(error))
-                } else {
-                    console.log('Пользователь не заполнил форму.')
+                this.valid = false;
+                if (this.bingSearch == true) {
+                    if (this.searchword && !this.AddSettings) {
+                        console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
+                        const searchWordURL = this.searchword.split(' ').join('+');
+                        let imageCountsURL;
+                        this.imageCount.length == '' ? imageCountsURL = 3 :  imageCountsURL = this.imageCount;
+                        const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}`
+                        console.log(`Ссылка для запроса - ${url}`);
+                        // API запрос для получения ссылок + названий картинок
+                        axios
+                            .get(url, { 
+                                headers: {
+                                    'Ocp-Apim-Subscription-Key' : 'enter you api key' 
+                                }
+                            })
+                            .then(response => {
+                                values = response.data.value;
+                                this.imageLinks = [];
+                                values.forEach(element => {
+                                    imageName = element.name;
+                                    imageLink = element.contentUrl;
+                                    this.imageLinks.push({title: imageName, url : imageLink});
+                                });
+                                    this.valid = true;
+                                // После удачного выполнения апи, делать запрос на сервер.
+                                this.axiosPOSTBing();
+                            })
+                            .catch(error => console.log(error))
+                        
+                    } else if (this.searchword && this.imageCount && this.AddSettings){
+                        // Переменные для API запроса
+                        const searchWordURL = this.searchword.split(' ').join('+');
+                        const imageCountsURL = this.imageCount;
+                        const imageColorURL = this.imageColor;
+                        const imageFollowSortURL = this.freshnes;
+                        const imageTypeURL = this.imageType;
+                        let safeSearchURL;
+                        this.safeSearch == true ? safeSearchURL = '&safeSearch=strict' : safeSearchURL = '&safeSearch=off';
+                        const imageSizeURL = this.imageSize;
+                        console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
+                        const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
+                        console.log(`Ссылка для запроса - ${url}`);
+                        // API запрос для получения сылок + названий картинок
+                        axios
+                            .get(url, { 
+                                headers: {
+                                    'Ocp-Apim-Subscription-Key' : 'enter you api key' 
+                                }
+                            })
+                            .then(response => {
+                                values = response.data.value;
+                                this.imageLinks = [];
+                                values.forEach(element => {
+                                    imageName = element.name;
+                                    imageLink = element.contentUrl;
+                                    this.imageLinks.push({title: imageName, url : imageLink});
+                                });
+                                this.valid = false;
+                                setTimeout(() => {
+                                    this.valid = true;
+                                }, 5000);
+                                // После удачного выполнения апи, делать запрос на сервер.
+                                this.axiosPOSTBing();
+                            })
+                            .catch(error => console.log(error))
+                    } else {
+                        console.log('Пользователь не заполнил форму.')
+                    }
+                } else if (this.googleSearch == true) { 
+                    if (this.searchword && !this.AddSettings) {
+                        console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}`)
+                        const searchWordURL = this.searchword.split(' ').join('+');
+                        let imageCountsURL;
+                        this.imageCount.length == '' ? imageCountsURL = 3 :  imageCountsURL = this.imageCount;
+                        const url = `https://yandex.ru/images/search?text=${searchWordURL}`
+                        console.log(`Ссылка для запроса - ${url}`);
+                        // Отправляем ссылку на бекенд для дальнейшего парсинга
+                        this.searched = true;
+                        this.POSTgoogle(url, imageCountsURL)
+                            .then( ()=> {
+                                this.valid = false;
+                                setTimeout(() => {
+                                    this.valid = true;
+                                }, 5000);
+                            })
+                    } else if (this.searchword && this.imageCount && this.AddSettings){
+                        // Переменные для API запроса
+                        const searchWordURL = this.searchword.split(' ').join('+');
+                        const imageCountsURL = this.imageCount;
+                        const imageColorURL = this.imageColor;
+                        const imageOrientation = this.imageOrientation;
+                        const imageTypeURL = this.imageType;
+                        const imageFileURL = this.fileTypes;
+                        const imageSizeURL = this.imageSize;
+                        console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
+                        const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}`
+                        console.log(`Ссылка для запроса - ${url}`);
+                        // API запрос для получения ссылок + названий картинок
+                        this.POSTgoogle(url, imageCountsURL)
+                            .then( ()=> {
+                                this.valid = false;
+                                setTimeout(() => {
+                                    this.valid = true;
+                                }, 5000);
+                            })
+                    } else {
+                        console.log('Пользователь не заполнил форму.')
+                    }
                 }
             },
             reset() {
@@ -390,12 +743,12 @@
                 this.window.width = window.innerWidth;
                 this.window.height = window.innerHeight;
             },
-            async axiosPOST() { // Функция запроса на сервер
+            async axiosPOSTBing() { // Функция запроса на сервер
                 let dwnURL = '';
                 // Создаем параметр который будем дальше отправлять
                 const params = new URLSearchParams();
                 params.append('imgLinkInServer', JSON.stringify(this.imageLinks));
-                await axios.post('http://localhost:3000/download', params)
+                await axios.post('http://localhost:3000/download-bing', params)
                 .then(function (response) {
                     console.log('Это респонз - ', response);
                     dwnURL = response.data.URL // Присвоим полученную строку, значению downloadURL
@@ -405,6 +758,28 @@
                     console.log('Это ошибка -', error);
                 });
                 this.downloadURL = dwnURL;
+            },
+            async POSTgoogle(urlFromParse, imageCount) {
+                console.log('Выполняется POSTGoogle')
+                console.log(urlFromParse, ' Это url')
+                let dwnURL = '';
+                // Создаем параметр который будем дальше отправлять
+                const params = new URLSearchParams();
+                params.append('imageCountInServer', JSON.stringify(imageCount));
+                params.append('urlFromParseInServer', JSON.stringify(urlFromParse));
+                await axios.post('http://localhost:3000/download-google', params)
+                .then(function (response) {
+                    console.log('Это респонз - ', response);
+                    dwnURL = response.data.URL
+                    imagesArr = response.data.imageArray // Присвоим полученную строку, значению downloadURL
+                    return imagesArr;
+                })
+                .catch(function (error) {
+                    console.log('Это ошибка -', error);
+                });
+                this.imageLinks = imagesArr;
+                this.downloadURL = dwnURL;
+                this.searched = false;
             }
         },
         created() {
