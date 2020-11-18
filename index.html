@@ -399,6 +399,15 @@
                                 </v-col>
                                 
                             </v-row>
+                            <v-row>
+                                <v-col>
+                                    <v-checkbox
+                                    v-model="safeSearch"
+                                    label='Safe Search'
+                                    required
+                                    ></v-checkbox>
+                                </v-col>
+                            </v-row>
                         </div>
                     </transition> 
 
@@ -716,8 +725,10 @@
                         const imageTypeURL = this.imageType;
                         const imageFileURL = this.fileTypes;
                         const imageSizeURL = this.imageSize;
+                        let safeSearchURL;
+                        this.safeSearch == true ? safeSearchURL = '&family=yes' : safeSearchURL = '&family=no';
                         console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
-                        const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}`
+                        const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}${safeSearchURL}`
                         console.log(`Ссылка для запроса - ${url}`);
                         // API запрос для получения ссылок + названий картинок
                         this.POSTyandex(url, imageCountsURL)
