@@ -19,9 +19,9 @@
             >
                 <v-card>
                     <v-card-title class="headline">
-                        Выбери пойсковую систему для пойска?
+                        Выбери пойсковую систему для пойска.
                     </v-card-title>
-                    <v-card-text>У каждой пойсковой системы есть свои настройки для пойска. Более гибкая настройка у Bing, наиболее популярные картинки у Google</v-card-text>
+                    <v-card-text>У каждой пойсковой системы есть свои настройки для пойска. Более гибкая настройка у Bing, наиболее популярные картинки у Google. Не все картинки могут быть доступны в нашей стране, поэтому они могут не загрузиться.</v-card-text>
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn
@@ -198,7 +198,7 @@
                         
                         <v-btn
                         :bind="downloadURL"
-                        v-if="downloadURL"
+                        v-if="downloadURL && downloadURL != 'Картинок по вашему запросу не найдено'"
                         :href="`http://localhost:3000/${downloadURL}`"
                         target="_blank"
                         color="indigo"
@@ -218,6 +218,13 @@
                         
                     </div>
                 </v-form>
+
+                <v-alert
+                        v-if="downloadURL == 'Картинок по вашему запросу не найдено' "
+                        dismissible
+                        type="error"
+                        style="position: fixed; top: 20%; left: 20%;"
+                        >Картинок по вашему запросу не найдено</v-alert>  
 
                  <v-row>
                     <v-col
@@ -430,7 +437,7 @@
                         
                         <v-btn
                         :bind="downloadURL"
-                        v-if="downloadURL && downloadURL != 'Картинок по вашему запросу не найдено'"
+                        v-if="downloadURL && downloadURL != 'Картинок по вашему запросу не найдено' || downloadURL != ''"
                         :href="`http://localhost:3000/${downloadURL}`"
                         target="_blank"
                         color="indigo"
@@ -545,7 +552,6 @@
                 v => !!v || `Image count is required`,
                 v => isFinite(v) || 'Enter a number',
                 v => (v && v > 0) || 'Enter a number greater than 0',
-                v => (v && v < 25) || 'Enter a number less than 25',
                 v => (v && v.length <= 2) || `Image count must be less than 2 characters`,
             ],
             bingColors: [
@@ -643,10 +649,10 @@
                         axios
                             .get(url, { 
                                 headers: {
-                                    'Ocp-Apim-Subscription-Key' : 'enter you api key' 
+                                    'Ocp-Apim-Subscription-Key' : '239aec5af8344139b63a2008d9e5241d' 
                                 }
                             })
-                            .then(response => {
+                            .then( (response) => {
                                 values = response.data.value;
                                 this.imageLinks = [];
                                 values.forEach(element => {
@@ -654,12 +660,20 @@
                                     imageLink = element.contentUrl;
                                     this.imageLinks.push({title: imageName, url : imageLink});
                                 });
+                                
+                                setTimeout(() => {
                                     this.valid = true;
+                                }, 5000);
                                 // После удачного выполнения апи, делать запрос на сервер.
-                                this.axiosPOSTBing();
+                                if (this.imageLinks.length == 0) {
+                                    this.downloadURL = 'Картинок по вашему запросу не найдено';
+                                } else {
+                                    this.axiosPOSTBing();
+                                }
+                                
                             })
                             .catch(error => console.log(error))
-                        
+                            console.log(this.downloadURL)
                     } else if (this.searchword && this.imageCount && this.AddSettings){
                         // Переменные для API запроса
                         const searchWordURL = this.searchword.split(' ').join('+');
@@ -671,13 +685,13 @@
                         this.safeSearch == true ? safeSearchURL = '&safeSearch=strict' : safeSearchURL = '&safeSearch=off';
                         const imageSizeURL = this.imageSize;
                         console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
-                        const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`
+                        const url = `https://api.bing.microsoft.com/v7.0/images/search?q=${searchWordURL}&count=${imageCountsURL}${imageColorURL}${safeSearchURL}${imageTypeURL}${imageSizeURL}${imageFollowSortURL}`.replace(/\s/g, '')
                         console.log(`Ссылка для запроса - ${url}`);
                         // API запрос для получения сылок + названий картинок
                         axios
                             .get(url, { 
                                 headers: {
-                                    'Ocp-Apim-Subscription-Key' : 'enter you api key' 
+                                    'Ocp-Apim-Subscription-Key' : '239aec5af8344139b63a2008d9e5241d' 
                                 }
                             })
                             .then(response => {
@@ -692,8 +706,12 @@
                                 setTimeout(() => {
                                     this.valid = true;
                                 }, 5000);
-                                // После удачного выполнения апи, делать запрос на сервер.
-                                this.axiosPOSTBing();
+
+                                if (this.imageLinks.length == 0) {
+                                    this.downloadURL = 'Картинок по вашему запросу не найдено';
+                                } else {
+                                    this.axiosPOSTBing();
+                                }
                             })
                             .catch(error => console.log(error))
                     } else {
@@ -728,9 +746,10 @@
                         let safeSearchURL;
                         this.safeSearch == true ? safeSearchURL = '&family=yes' : safeSearchURL = '&family=no';
                         console.log(`Слово для пойска ${this.searchword}, колличество запрошенных картинок ${this.imageCount}, основной цвет картинки ${this.imageColor}, сортировка по ${this.freshnes}, тип картинки ${this.imageType}, 18+ ${this.safeSearch}, размер картинки ${this.imageSize}`)
-                        const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}${safeSearchURL}`
+                        const url = `https://yandex.ru/images/search?text=${searchWordURL}${imageColorURL}${imageTypeURL}${imageSizeURL}${imageOrientation}${imageFileURL}${safeSearchURL}`.replace(/\s/g, '')
                         console.log(`Ссылка для запроса - ${url}`);
                         // API запрос для получения ссылок + названий картинок
+                        this.searched = true;
                         this.POSTyandex(url, imageCountsURL)
                             .then( ()=> {
                                 this.valid = false;
@@ -745,6 +764,7 @@
             },
             reset() {
                 this.imageLinks = [];
+                this.searched = false;
                 this.$refs.form.reset()
             },
             AddSettingsToggle() {
@@ -768,6 +788,7 @@
                 .catch(function (error) {
                     console.log('Это ошибка -', error);
                 });
+                console.log(dwnURL);
                 this.downloadURL = dwnURL;
             },
             async POSTyandex(urlFromParse, imageCount) {

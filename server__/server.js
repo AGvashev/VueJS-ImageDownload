@@ -6,13 +6,12 @@ const { parse } = require('querystring');
 const port = 3000;
 const fs = require('fs-extra')
 const path = require('path');
-const zip = new require('node-zip')();
 const axios = require('axios');
 const uniqid = require('uniqid');
-const bodyParser  = require('body-parser');
-const needle = require('needle');
 const cheerio = require('cheerio');
 const { dirname } = require('path');
+const puppeteer = require('puppeteer');
+const imageUrls = [];
 
 
 // Функция для реализации загрузки картинок 
@@ -41,6 +40,7 @@ server.listen(port, (err) => {
 
 // Обработка пост запроса на /download
 app.post('/download-bing', function(req, res) {
+    const zip = new require('node-zip')();
     // Принимаем все правила
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -57,7 +57,6 @@ app.post('/download-bing', function(req, res) {
     req.on('end', async () => {
             let bodyParse = parse(body);
             let data = JSON.parse(bodyParse.imgLinkInServer);
-
         // Создаем уникальное название будушему архиву+папке
         let dirName = uniqid()
         // Функция создания архива и загрузки картинок
@@ -66,21 +65,22 @@ app.post('/download-bing', function(req, res) {
             fs.mkdirSync(`server__/${dirName}`);
             // Проходимся по массиву с картинками
             for (const item of data) {
+                const imageFormat = item.url.substr(-3, 3)
                 console.log('Загрузка началась')
                 // Скачиваем картинку  
                 try {
-                    let image = await download_image(item.url, `server__/${dirName}/${item.title}.png`)
+                    let image = await download_image(item.url, `server__/${dirName}/${item.title}.${imageFormat}`)
                     console.log('Гучи флип флап')
                 } catch (error) {
-                    console.log('Ошибка, не удалось получить доступ к картинке')
+                    console.log('Не гучи флип флап')
                 }
                 console.log('Загрузка закончилась')
 
                 // Добавляем картинки в список архива
                 try {
-                    zip.file(`${item.title}.png`, fs.readFileSync(path.join(__dirname + `/${dirName}`, `${item.title}.png`)));
+                    zip.file(`${item.title}.${imageFormat}`, fs.readFileSync(path.join(__dirname + `/${dirName}`, `${item.title}.${imageFormat}`)));
                 } catch (error) {
-                    console.log('Ошибка, не удалось получить доступ к картинке')
+                    console.log('Ошибка, не удалось добавить картинку в архив')
                 }
             }
             // Создаем архив с ранее сгенерированным названием
@@ -115,16 +115,17 @@ app.post('/download-bing', function(req, res) {
                 });
           });
           // Отправляем ссылку на фронтенд.
-          if (imageUrls >= 1) {
-            res.json({ 'URL' : dirName }); 
-            } else {
-                res.json({'URL' : 'Картинок по вашему запросу не найдено'}); 
-            }
+                res.json({ 'URL' : `${dirName}` }); 
           
     });
   });
 
 app.post('/download-yandex', function(req, res) {
+    const zip = new require('node-zip')();
+    const imageUrlsName = imageUrls.length + 1;
+    
+    let imgUrls = imageUrls[imageUrlsName] = [];
+
     // Принимаем все правила
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -141,101 +142,150 @@ app.post('/download-yandex', function(req, res) {
     req.on('end', async () => {
             let bodyParse = parse(body);
             let data = JSON.parse(bodyParse.urlFromParseInServer);
-            console.log(bodyParse);
-            let imageCount = JSON.parse(bodyParse.imageCountInServer);
-            const imageUrls = [];
+            let imageCount = JSON.parse(bodyParse.imageCountInServer);    
             // Создаем уникальное название будушему архиву+папке
             let dirName = uniqid()             
             // Функция создания архива и загрузки картинок
 
-            needle.get(data, async function (error, response) {
-            if (error) {
-                return console.log(error);
-            }
-            if (!response.statusCode == 200) {
-                return console.log('Response status code !== 200');
-            }
-            const $ = cheerio.load(response.body);
-            const image = $(".serp-item");
-            image.each((index, element) => {
-                if (imageUrls.length < imageCount) {
-                    console.log('Запушил одну картинку')
-                    imageUrls.push({
-                        title: JSON.parse(element.attribs['data-bem'])['serp-item'].snippet.title,
-                        url: JSON.parse(element.attribs['data-bem'])['serp-item'].img_href
+            let scrape = async () => {
+                const browser = await puppeteer.launch({headless: true});
+                const page = await browser.newPage();
+                await page.goto(data)
+                await page.evaluate(async (imageCount) => {
+                    await new Promise((resolve, reject) => {
+                        var totalHeight = 0;
+                        var distance = 1000;
+                        var timer = setInterval(() => {
+                            if (!document.querySelector(`.serp-item`)) {
+                                clearInterval(timer);
+                                resolve();
+                            }
+                            var scrollHeight = document.body.scrollHeight;
+                            window.scrollBy(0, distance);
+                            totalHeight += distance;
+                            console.log('Цикл интервала')
+                            if(document.querySelector(`.serp-item_pos_${imageCount}`)){
+                                console.log('Цикл должен выключиться ')
+                                clearInterval(timer);
+                                resolve();
+                            }
+                        }, 800);
                     });
-                }
-            });
-            if (imageUrls.length != 0 ) {
-                await (async function downloadFiles() {
-                    // Создаем папку 
-                    fs.mkdirSync(`server__/${dirName}`);
-                    // Проходимся по массиву с картинками
-                    for (const item of imageUrls) {
-                        console.log('Загрузка началась')
-                        console.log(item.url)
-                        console.log('_______________________________________________________________')
-                        // Скачиваем картинку  
-                        try {
-                            let image = await download_image(item.url, `server__/${dirName}/${item.title}.png`)
-                            console.log('Гучи флип флап')
-                        } catch (error) {
-                            console.log('Ошибка, не удалось получить доступ к картинке')
-                        }
-                        console.log('Загрузка закончилась')
-        
-                        // Добавляем картинки в список архива
-                        try {
-                            zip.file(`${item.title}.png`, fs.readFileSync(path.join(__dirname + `/${dirName}`, `${item.title}.png`)));
-                        } catch (error) {
-                            console.log('Ошибка, не удалось получить доступ к картинке')
-                        }
+                }, imageCount);
+                const content = await page.content();
+                const $ = cheerio.load(content);
+                const image = $(".serp-item");
+                image.each((index, element) => {
+                    if (imgUrls.length < imageCount) {
+                        console.log('Запушил одну картинку')
+                        imgUrls.push({
+                            title: JSON.parse(element.attribs['data-bem'])['serp-item'].snippet.title,
+                            url: JSON.parse(element.attribs['data-bem'])['serp-item'].img_href
+                        });
                     }
-                    // Создаем архив с ранее сгенерированным названием
-                    const dataZIP = zip.generate({ base64:false, compression: 'DEFLATE' });
-                    fs.writeFileSync(__dirname + `/${dirName}.zip`, dataZIP, 'binary');
-                    // Удаляем ненужную папку с фотографиями
-                    try {
-                        fs.remove(`server__/${dirName}`)    
-                        console.log('Папка удалилась')
-                    } catch (error) {
-                        console.log(error)
+                });
+                browser.close();
+                return
+            };
+            
+            scrape().then(async () => {
+                if (imgUrls.length != 0 ) {
+                    await (async function downloadFiles() {
+                        // Создаем папку 
+                        fs.mkdirSync(`server__/${dirName}`);
+                        // Проходимся по массиву с картинками
+                        for (const item of imgUrls) {
+                            let imageFormat = `${item.url.substr(-3, 3)}`
+                            console.log(item.url)
+                            switch (imageFormat) {
+                                case 'png':
+                                    imageFormat = 'png'
+                                    break;
+                                
+                                 case 'jpg':
+                                    imageFormat = 'jpg'
+                                    break;
+
+                                case 'svg':
+                                    imageFormat = 'svg'
+                                    break;
+
+                                case 'gif':
+                                    imageFormat = 'gif'
+                                    break;
+                            
+                                default:
+                                    imageFormat = 'jpg'
+                                    break;
+                            }
+
+                            console.log('Загрузка началась')
+                            console.log('_______________________________________________________________')
+                            // Скачиваем картинку  
+                            try {
+                                let image = await download_image(item.url, `server__/${dirName}/${item.title}.${imageFormat}`)
+                                
+                                console.log('Гучи флип флап')
+                            } catch (error) {
+                                console.log('Ошибка, не удалось скачать картинку')
+                            }
+                            console.log('Загрузка закончилась')
+                            console.log('_______________________________________________________________')
+                            // Добавляем картинки в список архива
+                            try {
+                                
+                                zip.file(`${item.title}.${imageFormat}`, fs.readFileSync(path.join(__dirname + `/${dirName}`, `${item.title}.${imageFormat}`)));
+                            } catch (error) {
+                                console.log('Ошибка, не удалось добавить картинку в архив')
+                            }
+                        }
+                        // Создаем архив с ранее сгенерированным названием
+                        const dataZIP = zip.generate({ base64:false, compression: 'DEFLATE' });
+                        fs.writeFileSync(__dirname + `/${dirName}.zip`, dataZIP, 'binary');
+                        // Удаляем ненужную папку с фотографиями
+                        try {
+                            fs.remove(`server__/${dirName}`)    
+                            console.log('Папка удалилась')
+                        } catch (error) {
+                            console.log(error)
+                        }
+                        
+                    }())
+                        // Создание ссылки для загрузки файла, по ссылке с уникальным названием файла
+                    app.get(`/${dirName}`, function(req, res) {
+                        // Получаем путь после слеша
+                        const filePath = path.join(__dirname + `/${dirName}.zip`); 
+                        // Возвращаем файл по ссылке
+                        fs.readFile(filePath, function(error, dataR){
+                            console.log('Пробую отправить файл')
+                            if(error){
+                                console.log(error);
+                                res.statusCode = 404;
+                                res.end("Resourse not found!");
+                            }   
+                            else{
+                                console.log('Файл успешно отправлен')
+                                res.end(dataR);
+                            }
+                        });
+                    });
+                    
+                }
+                
+                // Отправляем ссылку на фронтенд.
+                try {
+                    if (imgUrls.length >= 1) {
+                        res.json({'URL' : dirName , 'imageArray' : imgUrls}); 
+                    } else {
+                        res.json({'URL' : 'Картинок по вашему запросу не найдено' , 'imageArray' : imgUrls}); 
                     }
                     
-                }())
-                    // Создание ссылки для загрузки файла, по ссылке с уникальным названием файла
-                app.get(`/${dirName}`, function(req, res) {
-                    // Получаем путь после слеша
-                    const filePath = path.join(__dirname + `/${dirName}.zip`); 
-                    // Возвращаем файл по ссылке
-                    fs.readFile(filePath, function(error, dataR){
-                        console.log('Пробую отправить файл')
-                        if(error){
-                            console.log(error);
-                            res.statusCode = 404;
-                            res.end("Resourse not found!");
-                        }   
-                        else{
-                            console.log('Файл успешно отправлен')
-                            res.end(dataR);
-                        }
-                    });
-                });
-                
-            }
-            
-            // Отправляем ссылку на фронтенд.
-            try {
-                if (imageUrls.length >= 1) {
-                    res.json({'URL' : dirName , 'imageArray' : imageUrls}); 
-                } else {
-                    res.json({'URL' : 'Картинок по вашему запросу не найдено' , 'imageArray' : imageUrls}); 
+                } catch (error) {
+                    console.log(error)
                 }
-                
-            } catch (error) {
-                console.log(error)
-            }
-            })
+                imgUrls = [];
+            });
+
     });
   });
 
